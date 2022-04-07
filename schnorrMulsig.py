@@ -45,7 +45,7 @@ class KeyGenerator:
 
     def check(self, R, P, S, m, debug=False):
         c1 = pow(self.g, S, self.p)
-        c2 = (R + pow(P, self.H([R, P, m]), self.p)) % self.p
+        c2 = (R*pow(P, self.H([R, P, m]), self.p)) % self.p
         if debug:
             print("=== Debug ===")
             print(f'    g^S       : {c1}')
@@ -97,7 +97,7 @@ def mulsig(userA, userB, gen):
     print(f"Use L = {L} to make it ...")
     PA = userA.consP(L)
     PB = userB.consP(L)
-    Pub =gen.mod(PA * PB)
+    Pub =gen.modq(PA * PB)
     print(f'{userA.name}: PA = {PA}')
     print(f'{userB.name}: PB = {PB}')
     print(f"We consent to use P = {Pub} as mult-sig Pubkey.")
@@ -106,7 +106,7 @@ def mulsig(userA, userB, gen):
     R2 = userB.consR()
     print(f'{userA.name}: R1 = {R1}')
     print(f'{userB.name}: R2 = {R2}')
-    Rand = gen.mod(R1 * R2)
+    Rand = gen.modq(R1 * R2)
     print(f"We consent to use R = {Rand} as mult-sig Random Number.")
     print("singing ...")
     m = "supercalifragilisticexpialidocious"
@@ -114,7 +114,7 @@ def mulsig(userA, userB, gen):
     S2 = userB.sign(Rand, Pub, m)
     print(f'{userA.name}: S1 = {S1}')
     print(f'{userB.name}: S2 = {S2}')
-    S = gen.mod(S1 + S2)
+    S = gen.modq(S1 + S2)
     print(f"The sign for message m is S = {S}")
     if gen.check(Rand, Pub, S, m, debug=True):
         print('Verification Success!')

@@ -38,10 +38,10 @@ if cmd == "gen":
 elif cmd == "check":
     print(f"is {value} prime? {is_prime(value, True)}")
 elif cmd == "div":
-    x = 268797847 #96485131 to 224196561666767548608204057308312976422247279836753
+    x = 269220053 #96485131 to 224196561666767548608204057308312976422247279836753
     while 1:
         while 1:
-            x += 1
+            x += 2
             if is_prime(x):
                 break
         print(x)
