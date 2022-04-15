@@ -7,9 +7,12 @@ except:
     pass
 
 g = 2
-p = 68893228236460459212259390067756135621390999268498766607510866631630411351587
+#p = 68893228236460459212259390067756135621390999268498766607510866631630411351587
+p = 1543
 a = 2*3
 q =  (p - 1)//a
+
+cnt = 0
 
 if cmd == "gen":
     while 1:
@@ -18,9 +21,11 @@ if cmd == "gen":
             if pow(g, i, p) == 1:
                 flag = False
                 break
-            if flag and pow(g, q, p) == 1:
-                print("g : ", g)
-                break
+        if flag and pow(g, q, p) == 1:
+            print("g : ", g)
+            cnt+=1
+        if cnt > 5:
+            break
         g += 1
 elif cmd == "check":
     results = list()
