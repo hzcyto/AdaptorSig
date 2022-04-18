@@ -21,6 +21,8 @@ P = 1543
 a = 2*3
 Q =  (P - 1)//a
 
+Hashy = [8, 9, 17, 26, 29, 31, 33, 47, 49, 50, 56, 60, 63, 64, 67, 72, 74, 81, 95, 103, 107, 114, 119, 121, 136, 153]
+
 class KeyGenerator:
     def __init__(self):
         self.g = G
@@ -28,10 +30,9 @@ class KeyGenerator:
         self.p = P
 
     def genKey(self):
-        sec1 = self.getRandom()
-        sec2 = self.getRandom()
-        pub = self.mod(pow(self.g, sec1, self.p)*pow(self.h, sec2, self.p))
-        return secKey(sec1, sec2), pubKey(pub)
+        sec = self.getRandom()
+        pub = pow(self.g, sec, self.p)
+        return secKey(sec), pubKey(pub)
 
     def getRandom(self):
         return secrets.randbelow(self.q)
@@ -47,17 +48,17 @@ class KeyGenerator:
             except:
                 pass
             data += sd
-        return self.mod(int.from_bytes(hashlib.sha256(data.encode()).digest(), "big"))
+        return Hashy[int.from_bytes(hashlib.sha256(data.encode()).digest(), "big")%len(Hashy)]
 
     def G(self, inputs):
-        data = str()
+        data = str(self.g)
         for d in inputs:
             try:
                 sd = str(d)
             except:
                 pass
             data += sd
-        return self.mod(int.from_bytes(hashlib.sha512(data.encode()).digest(), "big"))
+        return self.modq(int.from_bytes(hashlib.sha256(data.encode()).digest(), "big"))
 
     def mod(self, v):
         return v % self.p
@@ -65,15 +66,17 @@ class KeyGenerator:
     def modq(self, v):
         return v % self.q
 
-    def check(self, R, P, s1, s2, c, debug=False):
-        c1 = self.mod(pow(self.g, s1, self.p)*pow(self.h, s2, self.p))
-        c2 = self.mod(R*pow(P, c, self.p))
+    def check(self, P, m, z, r, s,c, debug=False):
+        h = self.H([m,r])
+        u = self.mod(pow(self.g, s, self.p)*pow(P, -c, self.p))
+        v = self.mod(pow(h, s, self.p)*pow(z, -c, self.p))
         if debug:
             print("=== Debug ===")
-            print(f'  g^s1*h^s2 : {c1}')
-            print(f'R*P^H(R|P|m): {c2}')
+            print(f"h' = {h}, u' = {u}, v' = {v}")
+            print(f'      c       : {c}')
+            print(f'G(g,h,P,z,u,v): {self.G([h,P,z,u,v])}')
             print("=============")
-        return c1 == c2
+        return c == self.G([h,P,z,u,v])
 
     def checkT(self, R, P, s1, s2, c, T, debug=False):
         c1 = self.mod(pow(self.g, s1, self.p)*pow(self.h, s2, self.p))
@@ -114,9 +117,13 @@ class secKey:
     def __init__(self, num):
         self.__key = num
         self.q = Q
+        self.p = P
     
     def modq(self, v):
         return v % self.q
+
+    def F(self, g):
+        return pow(g, self.__key, self.p)
 
     def sig(self, c, k):
         return self.modq(k + c*self.__key)
@@ -140,39 +147,47 @@ class User:
     def getPubK(self):
         return self.pubkey.get_num()
 
-    def getR(self):
-        return self.pubkey.randy(self.__r1, self.__r2)
+    def getV(self, h):
+        return pow(h, self.__k, self.gen.p)
+    
+    def getU(self):
+        return pow(self.gen.g, self.__k, self.gen.p)
     
     def getT(self, t1, t2):
         return self.pubkey.tandy(t1, t2)
 
     def sign(self, c):
-        return self.seckey.sig(c, self.__r1, self.__r2)
+        return self.seckey.sig(c, self.__k)
 
     def adaptSign(self, t1, t2, c):
         return self.seckey.aSig(t1, t2, c, self.__r1, self.__r2)
 
     #for debug
-    def getr1(self):
-        return self.__r1
+    def getk(self):
+        return self.__k
     def getr2(self):
         return self.__r2
     
 
 def EDLSign(userA:User, userB:User, gen:KeyGenerator):
     P = userA.getPubK()
-    R = userA.getR()
+    r = gen.getRandom()
     m = uuid.uuid4().hex
-    print(f'{userA.name}: 署名開始 -> R = {R}')
-    c = gen.H([R, P, m])
-    print(f'{userB.name}: チャレンジナンバー c = {c}')
-    sign1, sign2 = userA.sign(c)
-    print(f'{userA.name}: 署名 (s1, s2, R) = ({sign1}, {sign2}, {R})')
-    print(f"P = {P} で検証中...")
-    if gen.check(R, P, sign1, sign2, c, debug=False):
+    h = gen.H([m,r])
+    z = userA.seckey.F(h)
+    u = userA.getU()
+    v = userA.getV(h)
+    c = gen.G([h,P,z,u,v])
+    s = userA.sign(c)
+    print(f'{userA.name}: 署名 (z, r, s, c) = ({z}, {r}, {s}, {c})')
+    print(f"P = {P} でメッセージ m = {m} を検証中...")
+    if gen.check(P, m, z, r, s, c, debug=dflag):
         print('検証成功！')
     else:
         print('(x_x) < 検証失敗 > この署名は無効です...')
+        if dflag:
+            print(f"{userA.name}: h = {h}, u = {u}, v = {v}")
+            print(f"{userA.name}: p = {userA.seckey.getsec()}, k = {userA.getk()}")
 
 def mySignAS(userA:User, userB:User, gen:KeyGenerator):
     PA = userA.getPubK()

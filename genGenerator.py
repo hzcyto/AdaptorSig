@@ -24,7 +24,7 @@ if cmd == "gen":
         if flag and pow(g, q, p) == 1:
             print("g : ", g)
             cnt+=1
-        if cnt > 5:
+        if cnt > 100:
             break
         g += 1
 elif cmd == "check":
