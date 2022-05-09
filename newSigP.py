@@ -3,6 +3,7 @@ import re, sys
 import secrets
 import hashlib
 import uuid
+import time
 
 
 db = str()
@@ -201,7 +202,6 @@ def mySignAS(userA:User, userB:User, gen:KeyGenerator):
 
     aSA1, aSA2 = userA.adaptSign(t1, t2, c)
     print(f"signature : (aSA1, aSA2) = ({aSA1}, {aSA2})")
-
     if gen.checkT(RA, PA, aSA1, aSA2, c, T, debug=True):
         print("legal T!")
     else:
@@ -281,7 +281,10 @@ def mySignASM(userA:User, userB:User, gen:KeyGenerator):
 
 
 generator = KeyGenerator()
+#tstart = time.time()
 alice = User("Alice", generator)
+#tend = time.time() - tstart
+#print(tend)
 bob = User("Bob", generator)
 if cmd == "sign":
     mySign(alice, bob, generator)

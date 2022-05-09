@@ -196,7 +196,15 @@ def mySignAS(userA:User, userB:User, gen:KeyGenerator):
     PB = userB.getPubK()
     RB = userB.getR()
     m = uuid.uuid4().hex
-
+    e
+    r = gen.getRandom()
+    m = uuid.uuid4().hex
+    h = gen.H([m,r])
+    z = userA.seckey.F(h)
+    u = userA.getU()
+    v = userA.getV(h)
+    c = gen.G([h,P,z,u,v])
+    s = userA.sign(c)
     PAB = gen.mod(PA * PB)
     RAB = gen.mod(RA * RB)
     print(f"PAB = {PA} * {PB} mod q = {PAB}")
