@@ -1,8 +1,11 @@
+import secrets
 import sys
 
 cmd = sys.argv[1]
 try:
-    value = sys.argv[2]
+    value = int(sys.argv[2])
+    svalue = int(sys.argv[3])
+    tvalue = int(sys.argv[4])
 except:
     pass
 
@@ -28,8 +31,23 @@ if cmd == "gen":
             break
         g += 1
 elif cmd == "check":
+    g = svalue
     results = list()
-    for i in range(1, q + 1):
-        print(f'g^{i} = {pow(g, i, p)}')
+    for i in range(1, tvalue):
+        print(f'g^{i} = {pow(g, i, value)}')
+        results.append(pow(g, i, value))
     results.sort()
     print(results)
+elif cmd == "supergen":
+    n = (value-1)//svalue
+    print(f"p={value}, q={svalue}, n={n}")
+    while 1:
+        g = secrets.randbelow(svalue)
+        flag = True
+        for i in range(10):
+            if not pow(g, (i+1)*svalue-1,value) == pow(g,(i+2)*svalue-1,value):
+                flag = False
+                break
+        if flag:
+            break
+    print(f"g={g}")
